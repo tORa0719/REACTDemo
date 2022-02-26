@@ -1,0 +1,80 @@
+_schema-version: "3.2"
+ID: REACTDemoService
+version: 0.0.1
+modules:
+- name: REACTDemoService-destination-content
+  type: com.sap.application.content
+  requires:
+  - name: REACTDemoService-destination-service
+    parameters:
+      content-target: true
+  - name: REACTDemoService_html_repo_host
+    parameters:
+      service-key:
+        name: REACTDemoService_html_repo_host-key
+  - name: uaa_REACTDemoService
+    parameters:
+      service-key:
+        name: uaa_REACTDemoService-key
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Name: REACTDemoService_REACTDemoService_html_repo_host
+          ServiceInstanceName: REACTDemoService-html5-app-host-service
+          ServiceKeyName: REACTDemoService_html_repo_host-key
+          sap.cloud.service: REACTDemoService
+        - Authentication: OAuth2UserTokenExchange
+          Name: REACTDemoService_uaa_REACTDemoService
+          ServiceInstanceName: REACTDemoService-xsuaa-service
+          ServiceKeyName: uaa_REACTDemoService-key
+          sap.cloud.service: REACTDemoService
+        existing_destinations_policy: ignore
+  build-parameters:
+    no-source: true
+- name: REACTDemoService_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: REACTDemoService_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - REACTModule-content.zip
+      name: REACTModule
+      target-path: resources/
+- name: REACTModule
+  type: html5
+  path: REACTModule
+  build-parameters:
+    builder: custom
+    commands:
+    - npm install
+    - npm run build
+    supported-platforms: []
+resources:
+- name: REACTDemoService-destination-service
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      version: 1.0.0
+    service: destination
+    service-name: REACTDemoService-destination-service
+    service-plan: lite
+- name: REACTDemoService_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-name: REACTDemoService-html5-app-host-service
+    service-plan: app-host
+- name: uaa_REACTDemoService
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: REACTDemoService-xsuaa-service
+    service-plan: application
